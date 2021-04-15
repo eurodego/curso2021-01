@@ -12,7 +12,9 @@
         "module_name",
     ],
     "data": [
-        "views/helpdesk_menu.xml",
+        "security/helpdesk_security.xml",
         "security/ir.model.access.csv",
+        "views/helpdesk_menu.xml",
+        "views/helpdesk_view.xml",
     ],
 }
