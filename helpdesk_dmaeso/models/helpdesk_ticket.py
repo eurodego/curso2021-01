@@ -30,5 +30,37 @@ class HelpdeskTicket(models.Model):
 
     action_preventive = fields.Html(
         string='Preventive Action',
-        help='Describe preventive actions to do')
+        help='Describe preventive actions to do',
+        translate=True)
 
+    def asignar(self):
+        self.ensure_one()
+        self.write({
+            'state': 'asignado',
+            'assigned': True
+        })
+    
+    def proceso(self):
+        self.ensure_one()
+        self.write({
+            'state': 'proceso'
+        })
+    
+    # Pendiente, visible sólo con estado = en proceso o asignado
+    def pendiente(self):
+        self.ensure_one()
+        self.write({
+            'state': 'pendiente'
+        })
+    # Finalizar, visible en cualquier estado, menos cancelado y finalizado
+    def resuelto(self):
+        self.ensure_one()
+        self.write({
+            'state': 'resuelto'
+        })
+    # Cancelar, visible si no está cancelado
+    def cancelar(self):
+        self.ensure_one()
+        self.write({
+            'state': 'cancelado'
+        })

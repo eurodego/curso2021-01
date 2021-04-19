@@ -18,6 +18,12 @@
         <field name="arch" type="xml">
             <form string="Ticket">
             <header>
+                <!-- Asignar, En proceso,Pendiente, Finalizar, Cancelar-->
+                <button string="Asignar" name="asignar" type="object" states="nuevo" />
+                <button string="En Proceso" name="proceso" type="object" states="asignado" />
+                <button string="Pendiente" name="pendiente" type="object" states="proceso,asignado" />
+                <button string="Finalizar" name="resuelto" type="object" states="nuevo,asignado,proceso,pendiente" />
+                <button string="Cancelar" name="cancelar" type="object"  attrs="{'invisible':[('state','!=', 'cancelado')]}"  />
                 <field name="state" widget="statusbar" />
             </header>
                 <sheet>
