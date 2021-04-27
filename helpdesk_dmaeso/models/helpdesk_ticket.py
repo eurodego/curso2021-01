@@ -15,7 +15,8 @@ class HelpdeskTicketTag(models.Model):
     _description = 'Tag'
 
     name = fields.Char()
-    tag_ids = fields.Many2many(
+    public = fields.Boolean()
+    ticket_ids = fields.Many2many(
         comodel_name='helpdesk.ticket',
         relation='helpdesk_ticket_tag_rel',
         column1='tag_id',
