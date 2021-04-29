@@ -52,6 +52,10 @@
                                 <button string="Create tag"
                                 name="create_tag"
                                 type="object" />
+                                <button string="Create new tag"
+                                name="%(helpdesk_dmaeso.action_new_tag)d"
+                                type="action"
+                                context="{'default_name': tag_name,}"/>
                             </group>
                             <field name="tag_ids" context="{'form_view_ref':'helpdesk_dmaeso.view_helpdesk_ticket_tag_simple_form'}"
                             domain="[('public','=',True)]" options="{'no_create': True}"/>
@@ -174,4 +178,18 @@
         </field>
     </record>
 
+    <record id="helpdesk_ticket_action" model="ir.actions.act_window">
+        <field name="name">Tickets</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree,form,pivot,graph,calendar,kanban</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new ticket
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="helpdesk_ticket_menu_action" name="Tickets" sequence="10" parent="helpdesk_menu_submenu" action="helpdesk_ticket_action"/>
 </odoo>

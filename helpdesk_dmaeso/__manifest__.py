@@ -16,6 +16,7 @@
         "security/ir.model.access.csv",
         "views/helpdesk_menu.xml",
         "views/helpdesk_view.xml",
+        "data/delete_tag_cron.xml",
         "views/helpdesk_tag_view.xml",
     ],
 }

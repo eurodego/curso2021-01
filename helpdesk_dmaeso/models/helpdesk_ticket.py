@@ -1,4 +1,6 @@
-from odoo import fields, models, api
+from odoo import fields, models, api, _
+from odoo.exceptions import ValidationError
+from datetime import timedelta
 
 class HelpdeskTicketAction(models.Model):
     _name = 'helpdesk.ticket.action'
@@ -23,14 +25,23 @@ class HelpdeskTicketTag(models.Model):
         column2='ticket_id',
         string='Tickets')
     
+    @api.model
+    def cron_delete_tag(self):
+        tickets = self.search([('ticket_ids', '=', False)])
+        tickets.unlink()
 
 class HelpdeskTicket(models.Model):
     _name = "helpdesk.ticket"
     _description = "Helpdesk"
 
+    def _date_default_today(self):
+        return fields.Date.today()
+
     name = fields.Char(string='Name', required=True)
     description = fields.Text(string='Description')
-    date = fields.Date(string='Date')
+    date = fields.Date(
+        string='Date',
+        default=_date_default_today)
 
     state = fields.Selection(
         [('nuevo','Nuevo'),
@@ -59,7 +70,8 @@ class HelpdeskTicket(models.Model):
 
     user_id = fields.Many2one(
         comodel_name='res.users',
-        string='Assigned to')
+        string='Assigned to',
+        default=lambda self: self.env.user.id)
     
     action_ids = fields.One2many(
         comodel_name='helpdesk.ticket.action',
@@ -133,8 +145,32 @@ class HelpdeskTicket(models.Model):
     def create_tag(self):
         #Actualiza solo el registro actual
         self.ensure_one()
-        self.write(
-            {'tag_ids': [(0,0,{'name': self.tag_name})]}
-        )
+        # Comentado por creación de etiqueta mediante botón pasando los valores por contexto tarea T06
+        # self.write(
+        #    {'tag_ids': [(0,0,{'name': self.tag_name})]}
+        #)
         #Una vez creada la etiqueta se pone el campo en blanco para una nueva etiqueta
-        self.tag_name=False
+        #self.tag_name=False
+        
+        # T06-04. Modificar el botón de crear una etiqueta en el formulario de ticket para que abra una acción nueva, 
+        # pasando por contexto el valor del nombre y la relación con el ticket.
+        # Creo una acción llamada action_new_tag que se definirá en la view helpedesk_tag_view
+        action = self.env.ref('helpdesk_dmaeso.action_new_tag').read()[0]
+        action['context'] = {
+            'default_name': self.tag_name,
+            'default_ticket_ids': [(6,0,self.ids)]
+        }
+        self.tag_name = False
+        return action
+
+    #Condición para que el campo time no pueda ser menor que cero
+    @api.constrains('time')
+    def _time_positive(self):
+        for ticket in self:
+            if ticket.time and ticket.time < 0:
+                raise ValidationError(_("The time no must be negative."))
+
+    #Actualización de date_limit al cambiar la fecha del ticket
+    @api.onchange('date')
+    def _onchange_date(self):
+        self.date_limit = self.date and self.date + timedelta(days=1)
