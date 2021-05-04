@@ -8,6 +8,9 @@ class HelpdeskTicketAction(models.Model):
 
     name = fields.Char()
     date = fields.Date()
+    time = fields.Float(
+        string='Time'
+    )
     ticket_id = fields.Many2one(
         comodel_name='helpdesk.ticket',
         string='Ticket')
@@ -53,7 +56,11 @@ class HelpdeskTicket(models.Model):
         string='State',
         default='nuevo')
 
-    time = fields.Float(string='Time')
+    time = fields.Float(
+        string='Time',
+        compute='_get_time',
+        inverse='_set_time',
+        search='_search_time')
 
     assigned = fields.Boolean(string='Assigned', readonly=True)
 
@@ -114,9 +121,12 @@ class HelpdeskTicket(models.Model):
     # Cancelar, visible si no está cancelado
     def cancelar(self):
         self.ensure_one()
-        self.write({
-            'state': 'cancelado'
-        })
+        self.state = 'cancelado'
+
+    # Cancela un conjunto de tickets
+    def cancelar_multi(self):
+        for record in self:
+            record.cancelar()
 
     #Calcular asignado si existe User Id en el ticket
     @api.depends('user_id')
@@ -174,3 +184,24 @@ class HelpdeskTicket(models.Model):
     @api.onchange('date')
     def _onchange_date(self):
         self.date_limit = self.date and self.date + timedelta(days=1)
+
+    #Hacer que el campo tiempo dedicado sea calculado, en base al tiempo dedicado en cada acción, 
+    # y hacer el inverse para que cree una acción cuando se escrive el tiempo dedicado.
+    @api.depends('action_ids.time')
+    def _get_time(self):
+        for record in self:
+            record.time = sum(record.action_ids.mapped('time'))
+
+    def _set_time(self):
+        for record in self:
+            if record.time:
+                time_now = sum(record.action_ids.mapped('time'))
+                next_time = record.time - time_now
+                if next_time:
+                    data = {'name': '/', 'time': next_time, 'date': fields.Date.today(), 'ticket_id': record.id }
+                    self.env['helpdesk.ticket.action'].create(data)
+    
+    #Modificar el search del campo computed.
+    def _search_time(self, operator, value):
+        actions = self.env['helpdesk.ticket.action'].search([('time', operator, value)])
+        return [('id', 'in', actions.mapped('ticket_id').ids)]
